@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Neighborhood Help Exchange</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef3f0;--surface:#fff;--ink:#14302a;--mute:#5d726b;--line:#d3dfd9;--pine:#17604f;--on-pine:#fff;--sun:#f2b632;--rose:#b4483a;--offer:#2f6fb0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1b18;--surface:#172723;--ink:#e6f0ec;--mute:#93aaa2;--line:#2a403a;--pine:#5fbfa5;--on-pine:#0f1b18;--sun:#f2b632;--rose:#e48778;--offer:#7db4ea}}
+:root[data-theme="dark"]{--bg:#0f1b18;--surface:#172723;--ink:#e6f0ec;--mute:#93aaa2;--line:#2a403a;--pine:#5fbfa5;--on-pine:#0f1b18;--rose:#e48778;--offer:#7db4ea}
+*{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Figtree,system-ui,sans-serif}
+h1,h2,h3{font-family:"Bricolage Grotesque",Figtree,sans-serif;margin:0;line-height:1.15}
+main{max-width:720px;margin:0 auto;padding:16px}
+header{display:flex;flex-wrap:wrap;gap:10px;align-items:end;justify-content:space-between;margin-bottom:14px}
+h1{font-size:clamp(1.6rem,6vw,2.3rem);color:var(--pine)}
+.sub{color:var(--mute);margin:2px 0 0;font-size:.95rem}
+select,input,textarea,button{font:inherit;color:inherit}
+select,input,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface)}
+button{cursor:pointer;border:0;border-radius:10px;padding:10px 16px;font-weight:600;background:var(--pine);color:var(--on-pine);min-height:44px}
+button.ghost{background:transparent;color:var(--pine);border:1.5px solid var(--pine)}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.loc{display:flex;gap:8px;align-items:center;font-size:.9rem;color:var(--mute)}
+.loc select{width:auto;min-width:170px}
+nav{display:flex;gap:6px;margin:12px 0;border-bottom:2px solid var(--line)}
+nav button{background:none;color:var(--mute);border-radius:10px 10px 0 0;flex:1;border-bottom:3px solid transparent;margin-bottom:-2px}
+nav button[aria-selected=true]{color:var(--pine);border-bottom-color:var(--pine)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.chip{background:var(--surface);color:var(--ink);border:1.5px solid var(--line);padding:6px 12px;min-height:36px;font-weight:500}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.post{background:var(--surface);border:1.5px solid var(--line);border-left:6px solid var(--rose);border-radius:12px;padding:14px;margin-bottom:12px}
+.post.offer{border-left-color:var(--offer)}
+.post.done{opacity:.7}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:start;flex-wrap:wrap}
+.kind{font-weight:700;font-size:.85rem;color:var(--rose)}
+.offer .kind{color:var(--offer)}
+.meta{color:var(--mute);font-size:.88rem;margin:6px 0 10px}
+.badge{display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1.5px solid var(--line);border-radius:99px;padding:2px 10px 2px 4px;font-size:.85rem;font-weight:600}
+.badge b{background:var(--sun);color:#14302a;border-radius:99px;min-width:28px;text-align:center;padding:1px 6px}
+.timer{font-weight:600}.timer.low{color:var(--rose)}
+label{display:block;font-weight:600;margin:12px 0 4px}
+.card{background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:16px}
+.msg{padding:10px 12px;border-radius:10px;margin-top:12px;background:var(--bg);border:1.5px solid var(--line)}
+.msg.err{border-color:var(--rose);color:var(--rose)}
+.bar{height:10px;background:var(--bg);border-radius:9px;overflow:hidden;border:1px solid var(--line);margin:8px 0}
+.bar i{display:block;height:100%;background:var(--sun)}
+.empty{text-align:center;color:var(--mute);padding:32px 8px}
+ul.plain{list-style:none;padding:0;margin:10px 0 0}
+ul.plain li{padding:8px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <div>
+    <h1>Neighborhood Help Exchange</h1>
+    <p class="sub">Borrow, lend and lend a hand within 10 km.</p>
+  </div>
+  <div class="loc"><label for="place" style="margin:0">You are in</label><select id="place"></select></div>
+</header>
+<nav role="tablist">
+  <button role="tab" id="t-feed" aria-selected="true">Feed</button>
+  <button role="tab" id="t-post" aria-selected="false">New post</button>
+  <button role="tab" id="t-me" aria-selected="false">My profile</button>
+</nav>
+<section id="v-feed"></section>
+<section id="v-post" hidden></section>
+<section id="v-me" hidden></section>
+</main>
+<script>
+// ---------- Constants (functional constraints) ----------
+const EXPIRY_MS = 48*3600*1000, RADIUS_KM = 10, MAX_ACTIVE = 3, POINTS = 10, ME = 'you';
+const PLACES = {
+  'Riverside':[16.700,80.300],'Market Street':[16.715,80.312],'Old Town':[16.690,80.285],
+  'Green Park':[16.735,80.330],'Hill View':[16.760,80.350],'Far Hills (≈20 km away)':[16.880,80.300]
+};
+const CATS = ['Tools','Groceries','Pet care','Rides','Other'];
+const NAMES = {you:'You',asha:'Asha',ravi:'Ravi',meena:'Meena',kiran:'Kiran',lata:'Lata'};
+const H = 3600*1000;
+// ---------- "Backend" (location filter, matching, calculated reputation) ----------
+function km(a,b){const R=6371,r=x=>x*Math.PI/180,dLa=r(b[0]-a[0]),dLo=r(b[1]-a[1]);
+  const h=Math.sin(dLa/2)**2+Math.cos(r(a[0]))*Math.cos(r(b[0]))*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(h));}
+function seed(){const n=Date.now();return{place:'Riverside',
+  posts:[
+  {id:1,type:'request',cat:'Tools',title:'Need to borrow a cordless drill for a weekend',by:'asha',loc:'Market Street',at:n-3*H,status:'open'},
+  {id:2,type:'offer',cat:'Groceries',title:'Heading to the market Saturday, can pick up groceries',by:'ravi',loc:'Old Town',at:n-10*H,status:'open'},
+  {id:3,type:'request',cat:'Pet care',title:'Looking for someone to walk my dog this evening',by:'meena',loc:'Green Park',at:n-44*H,status:'open'},
+  {id:4,type:'offer',cat:'Tools',title:'Ladder and toolbox available to lend',by:'kiran',loc:'Hill View',at:n-20*H,status:'open'},
+  {id:5,type:'request',cat:'Rides',title:'Ride to the railway station tomorrow, 6 am',by:'lata',loc:'Riverside',at:n-1*H,status:'open'},
+  {id:6,type:'request',cat:'Other',title:'Need help carrying a table upstairs',by:'asha',loc:'Far Hills (≈20 km away)',at:n-2*H,status:'open'}],
+  // completed exchanges; reputation is calculated from these, never stored as a counter
+  exchanges:[['asha','ravi'],['asha','kiran'],['asha','lata'],['ravi','meena'],['kiran','meena'],['kiran','lata'],['kiran','ravi'],['ravi','lata']].map(p=>({users:p,at:n-99*H})),
+  nextId:7}}
+let S; try{S=JSON.parse(localStorage.getItem('nhx')||'null')}catch(e){S=null}
+if(!S)S=seed();
+function save(){try{localStorage.setItem('nhx',JSON.stringify(S))}catch(e){}}
+const active=p=>!['done'].includes(p.status)&&Date.now()-p.at<EXPIRY_MS;
+const reputation=u=>S.exchanges.filter(e=>e.users.includes(u)).length*POINTS; // calculated field
+const level=r=>r>=60?'Pillar':r>=30?'Trusted':r>=10?'Neighbor':'New';
+const badge=u=>{const r=reputation(u);return `<span class="badge" title="Trust score"><b>${r}</b>${NAMES[u]} · ${level(r)}</span>`};
+const dist=p=>km(PLACES[S.place],PLACES[p.loc]);
+function matches(p){return S.posts.filter(q=>q.id!==p.id&&q.type!==p.type&&q.cat===p.cat&&q.status==='open'&&active(q)&&q.by!==p.by&&km(PLACES[p.loc],PLACES[q.loc])<=RADIUS_KM).length}
+function left(p){const ms=EXPIRY_MS-(Date.now()-p.at),h=Math.floor(ms/H),m=Math.floor(ms%H/60000);return {t:h+'h '+m+'m left',low:h<6}}
+// ---------- UI ----------
+let filter='All',tab='feed',notice='';
+const $=id=>document.getElementById(id);
+function show(t){tab=t;['feed','post','me'].forEach(x=>{$('v-'+x).hidden=x!==t;$('t-'+x).setAttribute('aria-selected',x===t)});render()}
+['feed','post','me'].forEach(t=>$('t-'+t).onclick=()=>show(t));
+$('place').innerHTML=Object.keys(PLACES).map(k=>`<option>${k}</option>`).join('');
+$('place').value=S.place;
+$('place').onchange=e=>{S.place=e.target.value;save();render()};
+function feed(){
+  const list=S.posts.filter(p=>active(p)||p.status==='done'&&0).filter(p=>dist(p)<=RADIUS_KM)
+    .filter(p=>filter==='All'||p.cat===filter).sort((a,b)=>dist(a)-dist(b));
+  const hidden=S.posts.filter(p=>active(p)&&dist(p)>RADIUS_KM).length;
+  let h=`<div class="chips">${['All',...CATS].map(c=>`<button class="chip" aria-pressed="${c===filter}" data-c="${c}">${c}</button>`).join('')}</div>`;
+  if(notice)h+=`<div class="msg" role="status">${notice}</div>`;
+  h+=list.map(p=>{const t=left(p),mine=p.by===ME,m=matches(p);
+    let act='';
+    if(p.status==='open'&&!mine)act=`<button data-a="match" data-id="${p.id}">${p.type==='request'?'I can help':'Ask for this'}</button>`;
+    if(p.status==='open'&&mine)act=`<span class="meta">${m} matching ${p.type==='request'?'offer':'request'}${m===1?'':'s'} nearby</span>`;
+    if(p.status==='matched')act=`<span class="meta">Matched with ${NAMES[p.with]}.</span> ${(mine||p.with===ME)?`<button data-a="done" data-id="${p.id}">Confirm exchange done</button>`:''}`;
+    return `<article class="post ${p.type}"><div class="row"><span class="kind">${p.type==='request'?'Request':'Offer'} · ${p.cat}</span><span class="timer ${t.low?'low':''}">${t.t}</span></div>
+    <h3>${p.title.replace(/</g,'&lt;')}</h3><div class="meta">${badge(p.by)} &nbsp; ${dist(p).toFixed(1)} km away · ${p.loc}</div>${act}</article>`}).join('')
+    ||`<div class="empty">No ${filter==='All'?'':filter.toLowerCase()+' '}posts within ${RADIUS_KM} km. Be the first to post.</div>`;
+  if(hidden)h+=`<p class="meta">${hidden} more post${hidden>1?'s are':' is'} outside your ${RADIUS_KM} km radius and hidden.</p>`;
+  $('v-feed').innerHTML=h;
+}
+function postForm(){
+  const n=S.posts.filter(p=>p.by===ME&&active(p)).length;
+  $('v-post').innerHTML=`<div class="card"><h2>New post</h2><p class="meta">Active posts: ${n} of ${MAX_ACTIVE}. Posts expire after 48 hours.</p>
+  <label for="f-type">I want to</label><select id="f-type"><option value="request">Ask for help</option><option value="offer">Offer help</option></select>
+  <label for="f-cat">Category</label><select id="f-cat">${CATS.map(c=>`<option>${c}</option>`).join('')}</select>
+  <label for="f-title">What is it?</label><input id="f-title" maxlength="90" placeholder="e.g. Need a ladder for one afternoon">
+  <label for="f-loc">Post location</label><select id="f-loc">${Object.keys(PLACES).map(k=>`<option ${k===S.place?'selected':''}>${k}</option>`).join('')}</select>
+  <p style="margin:16px 0 0"><button id="f-go">Publish post</button></p><div id="f-msg"></div></div>`;
+  $('f-go').onclick=()=>{
+    const m=$('f-msg'),title=$('f-title').value.trim(),loc=$('f-loc').value;
+    const err=s=>{m.className='msg err';m.textContent=s};
+    if(title.length<5)return err('Add a short title of at least 5 characters.');
+    if(S.posts.filter(p=>p.by===ME&&active(p)).length>=MAX_ACTIVE)return err('You already have 3 active posts. Wait for one to expire or finish before posting again.');
+    if(km(PLACES[S.place],PLACES[loc])>RADIUS_KM)return err('That location is more than 10 km from where you are. Pick a closer place.');
+    S.posts.push({id:S.nextId++,type:$('f-type').value,cat:$('f-cat').value,title,by:ME,loc,at:Date.now(),status:'open'});
+    save();notice='Your post is live in the feed.';show('feed');
+  };
+}
+function me(){
+  const r=reputation(ME),next=r>=60?60:r>=30?60:r>=10?30:10,mine=S.posts.filter(p=>p.by===ME);
+  const board=Object.keys(NAMES).sort((a,b)=>reputation(b)-reputation(a));
+  $('v-me').innerHTML=`<div class="card"><h2>${badge(ME)}</h2>
+  <p class="meta">You earn ${POINTS} points for each confirmed exchange. Next level at ${next} points.</p>
+  <div class="bar" aria-hidden="true"><i style="width:${Math.min(100,r/next*100)}%"></i></div>
+  <h3 style="margin-top:16px">Your posts</h3><ul class="plain">${mine.map(p=>`<li><span>${p.title}</span><span class="meta">${p.status==='done'?'Done':!active(p)?'Expired':p.status==='matched'?'Matched':left(p).t}</span></li>`).join('')||'<li class="meta">You have not posted yet.</li>'}</ul>
+  <h3 style="margin-top:16px">Neighborhood trust scores</h3><ul class="plain">${board.map(u=>`<li><span>${NAMES[u]}</span><span>${badge(u)}</span></li>`).join('')}</ul>
+  <p style="margin-top:16px"><button class="ghost" id="reset">Reset demo data</button></p></div>`;
+  $('reset').onclick=()=>{S=seed();$('place').value=S.place;save();render()};
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.c){filter=b.dataset.c;notice='';render();return}
+  const p=S.posts.find(x=>x.id==b.dataset.id);if(!p)return;
+  if(b.dataset.a==='match'){p.status='matched';p.with=ME;notice=`You are matched with ${NAMES[p.by]}. Arrange the details together.`;
+    // demo: the other neighbor confirms; you confirm below
+  }
+  if(b.dataset.a==='done'){p.status='done';S.exchanges.push({users:[p.by,p.with],at:Date.now()});notice='Exchange confirmed. Both neighbors earned '+POINTS+' trust points.'}
+  save();render();
+});
+function render(){if(tab==='feed')feed();if(tab==='post')postForm();if(tab==='me')me()}
+render();setInterval(()=>{if(tab==='feed')feed()},60000);
+</script>
+</body>
+</html>
